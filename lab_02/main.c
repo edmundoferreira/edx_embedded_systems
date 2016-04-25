@@ -21,7 +21,9 @@
 // 1. Pre-processor Directives Section
 // Constant declarations to access port registers using
 // symbolic names instead of addresses
+#ifndef __GNUC__
 #include "TExaS.h"
+#endif
 #define GPIO_PORTF_DATA_R       (*((volatile unsigned long *)0x400253FC))
 #define GPIO_PORTF_DIR_R        (*((volatile unsigned long *)0x40025400))
 #define GPIO_PORTF_AFSEL_R      (*((volatile unsigned long *)0x40025420))
@@ -47,9 +49,13 @@ void EnableInterrupts(void);
 // 3. Subroutines Section
 // MAIN: Mandatory for a C Program to be executable
 int main(void){
-	TExaS_Init(SW_PIN_PF40,LED_PIN_PF321); // this initializes the TExaS grader lab 2
+  #ifndef __GNUC__
+  TExaS_Init(SW_PIN_PF40,LED_PIN_PF321); // this initializes the TExaS grader lab 2
+  #endif
   PortF_Init();        // Call initialization of port PF4 PF2
+  #ifndef __GNUC__
   EnableInterrupts();  // The grader uses interrupts
+  #endif
   while(1){
 		In = GPIO_PORTF_DATA_R&0x10; // read PF4 into In
     if(In == 0x00){              // zero means SW1 is pressed
@@ -69,9 +75,12 @@ int main(void){
 // Inputs: None
 // Outputs: None
 // Notes: These five pins are connected to hardware on the LaunchPad
-void PortF_Init(void){ volatile unsigned long delay;
+void PortF_Init(void)
+{
+  volatile unsigned long delay=0;
   SYSCTL_RCGC2_R |= 0x00000020;     // 1) F clock
   delay = SYSCTL_RCGC2_R;           // delay
+  delay; 
   GPIO_PORTF_LOCK_R = 0x4C4F434B;   // 2) unlock PortF PF0
   GPIO_PORTF_CR_R = 0x1F;           // allow changes to PF4-0
   GPIO_PORTF_AMSEL_R = 0x00;        // 3) disable analog function
