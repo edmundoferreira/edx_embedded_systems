@@ -35,6 +35,13 @@
 #define GPIO_PORTF_AMSEL_R      (*((volatile unsigned long *)0x40025528))
 #define GPIO_PORTF_PCTL_R       (*((volatile unsigned long *)0x4002552C))
 #define SYSCTL_RCGC2_R          (*((volatile unsigned long *)0x400FE108))
+	
+
+//#define LEDs 	(*((volatile unsigned long *)0x40025038)) //base address for portF data is 0x40025000
+#define AS	 	(*((volatile unsigned long *)0x40025040)) //PortF bit 4
+#define Ready (*((volatile unsigned long *)0x40025020))	//PortF bit 3
+#define VT		(*((volatile unsigned long *)0x40025008)) //PortF bit 1
+	
 // 2. Declarations Section
 //   Global Variables
 
@@ -55,17 +62,38 @@ int main(void){
   TExaS_Init(SW_PIN_PF40, LED_PIN_PF31,ScopeOn);  // activate grader and set system clock to 80 MHz
   PortF_Init();                            // Init port PF4 PF3 PF1    
   EnableInterrupts();                      // enable interrupts for the grader  
-  while(1){          // Follows the nine steps list above
-    // a) Ready signal goes high
-    // b) wait for switch to be pressed
-    // c) Ready signal goes low
-    // d) wait 10ms
-    // e) wait for switch to be released
+  
+	while(1) 	// Follows the nine steps list above
+	{ 
+		// a) Ready signal goes high
+		SetReady();
+    
+		// b) wait for switch to be pressed
+    WaitForASLow();
+		
+	
+		// c) Ready signal goes low
+		ClearReady();
+    
+		// d) wait 10ms
+		Delay1ms(10);
+    
+		// e) wait for switch to be released
+		WaitForASHigh();
+		
     // f) wait 250ms
-    // g) VT signal goes high
-    // h) wait 250ms
+		Delay1ms(250);
+		
+    
+		// g) VT signal goes high
+    SetVT();
+		
+		// h) wait 250ms
+		Delay1ms(250);
+		
     // i) VT signal goes low
-  }
+		ClearVT();
+	}
 }
 // Subroutine to initialize port F pins for input and output
 // PF4 is input SW1 and PF3-1 is output LEDs
@@ -100,6 +128,7 @@ void PortF_Init(void){ volatile unsigned long delay;
 // Outputs: None
 void WaitForASLow(void){
 // write this function
+	while(AS);
 }
 
 // Subroutine reads AS input and waits for signal to be high
@@ -109,6 +138,7 @@ void WaitForASLow(void){
 // Outputs: None
 void WaitForASHigh(void){
 // write this function
+	while(!AS);
 }
 
 // Subroutine sets VT high
@@ -117,6 +147,7 @@ void WaitForASHigh(void){
 // Notes:   friendly means it does not affect other bits in the port
 void SetVT(void){
 // write this function
+	VT = 0x02;
 }
 
 // Subroutine clears VT low
@@ -124,7 +155,7 @@ void SetVT(void){
 // Outputs: None
 // Notes:   friendly means it does not affect other bits in the port
 void ClearVT(void){
-// write this function
+	VT = 0x00;
 }
 
 // Subroutine sets Ready high
@@ -133,6 +164,7 @@ void ClearVT(void){
 // Notes:   friendly means it does not affect other bits in the port
 void SetReady(void){
 // write this function
+	 Ready = 0x08;
 }
 
 
@@ -142,6 +174,7 @@ void SetReady(void){
 // Notes:   friendly means it does not affect other bits in the port
 void ClearReady(void){
 // write this function
+	Ready = 0x00;
 }
 
 // Subroutine to delay in units of milliseconds
@@ -149,7 +182,17 @@ void ClearReady(void){
 // Outputs: None
 // Notes:   assumes 80 MHz clock
 void Delay1ms(unsigned long msec){
-// write this function
 
+	unsigned int counter;
+	
+	while(msec > 0)
+	{
+		counter = 16000*25/30;
+		while(counter >0)
+		{
+			--counter;
+		}
+		--msec;
+	}
 }
 
