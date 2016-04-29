@@ -53,13 +53,14 @@ int main(void){
 		
 		if(!SW1) // pressed
 		{
-			LEDs ^= 0x0A;
+			LEDs ^= 0x04;
 		}
 		else //not pressed
 		{
 			LEDs = 0x04;
 		}
 			
+		
 		
 		//In = GPIO_PORTF_DATA_R&0x10;   // read PF4 into Sw1
     //In = In>>2;                    // shift into position PF2
@@ -109,7 +110,7 @@ void Delay100ms(unsigned long time)
   unsigned long i;
   while(time > 0){
     i = 1333333;  // this number means 100ms
-    while(i > 0){
+		while(i > 0){
       i = i - 1;
     }
     time = time - 1; // decrements every 100 ms

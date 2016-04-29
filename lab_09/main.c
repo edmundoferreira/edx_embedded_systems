@@ -41,8 +41,16 @@ This means no adjacent elements in the array should be equal.
 
 */
 
+#define LEDs (*((volatile unsigned long *)0x40025038)) //base address for portF data is 0x40025000
+#define SW1  (*((volatile unsigned long *)0x40025040))	
+#define SW2  (*((volatile unsigned long *)0x40025004))	
 
-void PortF_Init(void){ volatile unsigned long delay;
+
+
+
+void PortF_Init(void)
+{ 
+	volatile unsigned long delay;
   SYSCTL_RCGC2_R |= 0x00000020;     // 1) activate clock for Port F
   delay = SYSCTL_RCGC2_R;           // allow time for clock to start
   GPIO_PORTF_LOCK_R = 0x4C4F434B;   // 2) unlock GPIO Port F
@@ -63,10 +71,12 @@ void SysTick_Init(void){
   NVIC_ST_CURRENT_R = 0;                // any write to current clears it             
   NVIC_ST_CTRL_R = 0x00000005;          // enable SysTick with core clock
 }
-unsigned long Led;
+
+
 void Delay(void){unsigned long volatile time;
-  time = 160000; // 0.1sec
-  while(time){
+  //time = 160000; // 0.1sec
+  time = 150000/2.0;
+	while(time){
    time--;
   }
 }
@@ -74,6 +84,8 @@ void Delay(void){unsigned long volatile time;
 unsigned long Time[50];
 // you must leave the Data array defined exactly as it is
 unsigned long Data[50];
+
+
 int main(void){  unsigned long i,last,now;
   TExaS_Init(SW_PIN_PF40, LED_PIN_PF1);  // activate grader and set system clock to 16 MHz
   PortF_Init();   // initialize PF1 to output
@@ -81,17 +93,39 @@ int main(void){  unsigned long i,last,now;
   i = 0;          // array index
   last = NVIC_ST_CURRENT_R;
   EnableInterrupts();           // enable interrupts for the grader
-  while(1){
-    Led = GPIO_PORTF_DATA_R;   // read previous
-    Led = Led^0x02;            // toggle red LED
-    GPIO_PORTF_DATA_R = Led;   // output 
-    if(i<50){
-      now = NVIC_ST_CURRENT_R;
-      Time[i] = (last-now)&0x00FFFFFF;  // 24-bit time difference
-      Data[i] = GPIO_PORTF_DATA_R&0x02; // record PF1
-      last = now;
-      i++;
-    }
+  
+	
+	LEDs = 0x0; //start with led off
+	
+	while(1)
+	{
+		if(!SW1 || !SW2) // pressed
+		{
+			LEDs ^= 0x02;
+			if(i<50){
+				now = NVIC_ST_CURRENT_R;
+				Time[i] = (last-now)&0x00FFFFFF;  // 24-bit time difference
+				Data[i] = GPIO_PORTF_DATA_R&0x13; // record PF1
+				last = now;
+				i++;
+			}
+		}
+		else //not pressed
+		{
+			LEDs = 0x0;
+		}
+		
+		
+    //Led = GPIO_PORTF_DATA_R;   // read previous
+    //Led = Led^0x02;            // toggle red LED
+    //GPIO_PORTF_DATA_R = Led;   // output 
+    //if(i<50){
+    //  now = NVIC_ST_CURRENT_R;
+    //  Time[i] = (last-now)&0x00FFFFFF;  // 24-bit time difference
+    //  Data[i] = GPIO_PORTF_DATA_R&0x02; // record PF1
+    //  last = now;
+    //  i++;
+    //}
     Delay();
   }
 }
