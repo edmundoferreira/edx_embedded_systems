@@ -66,19 +66,20 @@ void PortF_Init(void)
 
 // Initialize SysTick with busy wait running at bus clock.
 void SysTick_Init(void){
-  NVIC_ST_CTRL_R = 0;                   // disable SysTick during setup
-  NVIC_ST_RELOAD_R = 0x00FFFFFF;        // maximum reload value
-  NVIC_ST_CURRENT_R = 0;                // any write to current clears it             
+  //NVIC_ST_CTRL_R = 0;                   // disable SysTick during setup
+  //NVIC_ST_RELOAD_R = 0;        					// maximum reload value
+  //NVIC_ST_CURRENT_R = 0;                // any write to current clears it             
   NVIC_ST_CTRL_R = 0x00000005;          // enable SysTick with core clock
 }
 
 
-void Delay(void){unsigned long volatile time;
-  //time = 160000; // 0.1sec
-  time = 150000/2.0;
-	while(time){
-   time--;
-  }
+void Delay(unsigned long delay_count)
+{
+	NVIC_ST_RELOAD_R 	= delay_count -1;
+	NVIC_ST_CURRENT_R = 0;
+	
+	while((NVIC_ST_CTRL_R &0x10000) == 0){} //wait for bit16 to become high  
+	
 }
 // first data point is wrong, the other 49 will be correct
 unsigned long Time[50];
@@ -116,17 +117,7 @@ int main(void){  unsigned long i,last,now;
 		}
 		
 		
-    //Led = GPIO_PORTF_DATA_R;   // read previous
-    //Led = Led^0x02;            // toggle red LED
-    //GPIO_PORTF_DATA_R = Led;   // output 
-    //if(i<50){
-    //  now = NVIC_ST_CURRENT_R;
-    //  Time[i] = (last-now)&0x00FFFFFF;  // 24-bit time difference
-    //  Data[i] = GPIO_PORTF_DATA_R&0x02; // record PF1
-    //  last = now;
-    //  i++;
-    //}
-    Delay();
+    Delay(800000);
   }
 }
 
