@@ -28,6 +28,8 @@
 
 #include "tm4c123gh6pm.h"
 #include "UART.h"
+#include <string.h>
+
 
 //------------UART_Init------------
 // Initialize the UART for 115200 baud rate (assuming 80 MHz UART clock),
@@ -123,6 +125,11 @@ char character;
 // Output: none
 void UART_OutString(unsigned char buffer[]){
 // as part of Lab 11 implement this function
+	while(*buffer)
+	{
+		UART_OutChar(*buffer);
+		buffer++;
+	}
 
 }
 
@@ -140,7 +147,35 @@ unsigned char String[10];
 //10000 to "**** "  any value larger than 9999 converted to "**** "
 void UART_ConvertUDec(unsigned long n){
 // as part of Lab 11 implement this function
-  
+  unsigned short cnt=0;
+	unsigned char d=0;
+	char tmp[4];
+	unsigned short i;
+
+
+	while(n>0 || cnt==0)
+	{
+		d= n%10;
+		n= n/10;
+		tmp[cnt] = d+0x30;
+		cnt++;
+	}
+	
+	
+	for(i=0; i<4; i++)
+	{
+		if(tmp[3-i])
+			String[i]= tmp[3-i];
+		else
+			String[i]= ' ';
+		
+		if(cnt>4)
+			String[i] = '*';
+	}
+	
+	String[4]=' '; 	//add extra space
+	String[5]='\0'; //terminate string
+
 }
 
 //-----------------------UART_OutUDec-----------------------
@@ -148,7 +183,8 @@ void UART_ConvertUDec(unsigned long n){
 // Input: 32-bit number to be transferred
 // Output: none
 // Fixed format 4 digits, one space after, null termination
-void UART_OutUDec(unsigned long n){
+void UART_OutUDec(unsigned long n)
+{
   UART_ConvertUDec(n);     // convert using your function
   UART_OutString(String);  // output using your function
 }
@@ -164,9 +200,38 @@ void UART_OutUDec(unsigned long n){
 //  102 to "0.102 cm" 
 // 2210 to "2.210 cm"
 //10000 to "*.*** cm"  any value larger than 9999 converted to "*.*** cm"
-void UART_ConvertDistance(unsigned long n){
-// as part of Lab 11 implement this function
-  
+void UART_ConvertDistance(unsigned long n)
+{
+	// as part of Lab 11 implement this function
+
+//  unsigned short cnt=0;
+//	unsigned char d=0;
+	char tmp[4];
+	unsigned short i;
+
+	strncpy(tmp,(char*)String,4);
+	
+	
+	
+	for(i=0;i<5;i++)
+	{
+		if(i==0)
+			String[i]=tmp[i];
+		else if(i==1)
+			String[i]='.';
+		else
+			String[i]=tmp[i-1];
+
+	
+		if(String[i]==' ')
+			String[i]='0';
+	}
+	
+	
+	String[5]=' '; //add extra space
+	String[6]='c'; 
+	String[7]='m'; 
+
 }
 
 //-----------------------UART_OutDistance-----------------------
