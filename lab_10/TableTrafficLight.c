@@ -21,21 +21,86 @@
 #include "TExaS.h"
 #include "tm4c123gh6pm.h"
 
+
 // ***** 2. Global Declarations Section *****
+enum states { GoN=0, WoN, GoE, WoE, Wa, Hu};
+
+struct State 
+{
+	void(*FuncPt)(int);			//function pointer
+  unsigned long WaitTime;
+  unsigned long Next[8];
+} ;
+
+
 
 // FUNCTION PROTOTYPES: Each subroutine defined
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
 
-// ***** 3. Subroutines Section *****
 
-int main(void){ 
+
+
+// ***** 3. Subroutines Section *****
+void Output(int stt)
+{
+	switch(stt)
+	{
+		case(GoN):
+			GPIO_PORTB_DATA_R = 0x2;
+			GPIO_PORTF_DATA_R = 0x21;
+			break;
+		
+		case(WoN):
+			GPIO_PORTB_DATA_R = 0x2;
+			GPIO_PORTF_DATA_R = 0x22;
+			break;
+		
+		case(GoE):
+			GPIO_PORTB_DATA_R = 0x2;
+			GPIO_PORTF_DATA_R = 0xC;
+			break;
+		
+		case(WoE):
+			GPIO_PORTB_DATA_R = 0x2;
+			GPIO_PORTF_DATA_R = 0x14;
+			break;
+		
+		case(Wa):
+			GPIO_PORTB_DATA_R = 0x08;
+			GPIO_PORTF_DATA_R = 0x24;
+			break;
+		
+		case(Hu):
+			GPIO_PORTB_DATA_R = 0x2;
+			GPIO_PORTF_DATA_R = 0x24;
+			break;
+	}
+}
+
+
+int main(void)
+{
+	int S= GoN;
+	
+	struct State FSM[] =
+	{
+		{&Output, 80000, {GoN, WoN, GoN, WoN, WoN, WoN, WoN, WoN}},
+		{&Output, 80000, {GoN, WoN, GoN, WoN, WoN, WoN, WoN, WoN}}
+	};
+
+	
   TExaS_Init(SW_PIN_PE210, LED_PIN_PB543210,ScopeOff); // activate grader and set system clock to 80 MHz
- 
-  
   EnableInterrupts();
-  while(1){
-     
+  
+	
+  while(1)
+		{
+			(FSM[S].FuncPt)(S); 
+
+			//SysTick_Wait10ms(FSM[S].WaitTime);
+//    Input = SENSOR;     // read sensors
+//    S = FSM[S].Next[Input];  
   }
 }
 
