@@ -22,9 +22,9 @@
 #include "tm4c123gh6pm.h"
 
 #define SENSORs (*((volatile unsigned long *)0x4002401C)) //PortE.0-2
-#define T1s			80000000
-#define T01s		8000000
-
+#define Ttrans 		200   //transition time
+#define	Tflash		30		//flash time
+#define Nflash	  5     //number of hurry flashes
 
 // ***** 2. Global Declarations Section *****
 enum states { GoN=0, WoN, GoE, WoE, Wa, Hu};
@@ -84,11 +84,23 @@ void SysTick_Delay(unsigned long p_delay)
   while((NVIC_ST_CTRL_R&0x00010000)==0){} // wait for count flag
 }
 
+// 10000us equals 10ms
+void Delay(unsigned long delay){
+  unsigned long i;
+  for(i=0; i<delay; i++){
+    SysTick_Delay(800000);  // wait 10ms
+  }
+}
+
+
+
 
 
 // ***** 3. Subroutines Section *****
 void Output(int stt)
 {
+	unsigned short i;
+	
 	switch(stt)
 	{
 		case(GoN):
@@ -119,10 +131,11 @@ void Output(int stt)
 		case(Hu):
 			GPIO_PORTB_DATA_R = 0x24;
 			GPIO_PORTF_DATA_R = 0x2;
-			SysTick_Delay(T01s);
-			GPIO_PORTF_DATA_R = 0x0;
-			SysTick_Delay(T01s);
-			GPIO_PORTF_DATA_R = 0x2;
+			for(i=0; i<=Nflash; i++)
+			{
+				Delay(Tflash);
+				GPIO_PORTF_DATA_R ^= 0x2;
+			}
 			break;
 	}
 }
@@ -135,12 +148,12 @@ int main(void)
 	
 	struct State FSM[] =
 	{
-		{&Output, T1s, {GoN, WoN, GoN, WoN, WoN, WoN, WoN, WoN}},		//GoN State
-		{&Output, T1s, { Wa, GoE,  Wa, GoE,  Wa, GoE,  Wa, GoE}},		//WoN State
-		{&Output, T1s, {GoE, GoE, WoE, WoE, WoE, WoE, WoE, WoE}},		//GoE State
-		{&Output, T1s, {GoN, GoN, GoN, GoN,  Wa,  Wa,  Wa,  Wa}},		//WoE State
-		{&Output, T1s, { Wa, 	Hu,  Hu,  Hu,  Wa,  Hu,  Hu,  Hu}},		//Wa	State
-		{&Output, T1s, {GoE, GoE, GoN, GoE, GoN, GoE, GoN, GoN}},		//Hu	State
+		{&Output, Ttrans, {GoN, WoN, GoN, WoN, WoN, WoN, WoN, WoN}},		//GoN State
+		{&Output, Ttrans, { Wa, GoE,  Wa, GoE,  Wa, GoE,  Wa, GoE}},		//WoN State
+		{&Output, Ttrans, {GoE, GoE, WoE, WoE, WoE, WoE, WoE, WoE}},		//GoE State
+		{&Output, Ttrans, {GoN, GoN, GoN, GoN,  Wa,  Wa,  Wa,  Wa}},		//WoE State
+		{&Output, Ttrans, { Wa, 	Hu,  Hu,  Hu,  Wa,  Hu,  Hu,  Hu}},		//Wa	State
+		{&Output, Ttrans, {GoE, GoE, GoN, GoE, GoN, GoE, GoN, GoN}},		//Hu	State
 	};
 
 	Init();
@@ -152,10 +165,10 @@ int main(void)
   while(1)
 	{
 				
-		(FSM[S].FuncPt)(S); 						//run output function f(S)
-		SysTick_Delay(FSM[S].WaitTime); //wait
-		Input = SENSORs;     						//read sensors
-		S = FSM[S].Next[Input];  				//go to next state
+		(FSM[S].FuncPt)(S); 			//run output function f(S)
+		Delay(FSM[S].WaitTime); 	//wait
+		Input = SENSORs;     			//read sensors
+		S = FSM[S].Next[Input];  	//go to next state
 			
 //		//Debugging Output
 //		Input = SENSORs;     						
