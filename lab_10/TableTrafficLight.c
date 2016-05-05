@@ -152,7 +152,7 @@ int main(void)
 		{&Output, Ttrans, { Wa, GoE,  Wa, GoE,  Wa, GoE,  Wa, GoE}},		//WoN State
 		{&Output, Ttrans, {GoE, GoE, WoE, WoE, WoE, WoE, WoE, WoE}},		//GoE State
 		{&Output, Ttrans, {GoN, GoN, GoN, GoN,  Wa,  Wa,  Wa,  Wa}},		//WoE State
-		{&Output, Ttrans, { Wa, 	Hu,  Hu,  Hu,  Wa,  Hu,  Hu,  Hu}},		//Wa	State
+		{&Output, Ttrans, { Wa,  Hu,  Hu,  Hu,  Wa,  Hu,  Hu,  Hu}},		//Wa	State
 		{&Output, Ttrans, {GoE, GoE, GoN, GoE, GoN, GoE, GoN, GoN}},		//Hu	State
 	};
 
